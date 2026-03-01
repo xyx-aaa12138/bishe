@@ -1,0 +1,89 @@
+<h2>大学生就业分析系统</h2>
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<input id="major" placeholder="请输入专业">
+<button onclick="run()">搜索</button>
+
+<div id="chart1" style="width:700px;height:400px;"></div>
+<div id="chart2" style="width:700px;height:400px;"></div>
+<div id="chart3" style="width:700px;height:400px;"></div>
+<div id="chart4" style="width:700px;height:400px;"></div>
+
+<script>
+
+function run(){
+
+ fetch("/run/",{
+   method:"POST",
+   headers:{
+     "Content-Type":"application/json",
+     "X-CSRFToken":"{{ csrf_token }}"
+   },
+   body:JSON.stringify({
+     major:document.getElementById("major").value
+   })
+ })
+ .then(r=>r.json())
+ .then(data=>{
+
+    drawCity(data.city);
+    drawEdu(data.edu);
+    drawExp(data.exp);
+    drawSalary(data.salary);
+
+ })
+}
+
+// ===== 城市岗位 =====
+function drawCity(data){
+
+ let chart=echarts.init(document.getElementById('chart1'));
+
+ chart.setOption({
+   title:{text:'岗位城市分布'},
+   xAxis:{type:'category',data:data.map(i=>i[0])},
+   yAxis:{type:'value'},
+   series:[{type:'bar',data:data.map(i=>i[1])}]
+ });
+}
+
+// ===== 学历 =====
+function drawEdu(data){
+
+ let chart=echarts.init(document.getElementById('chart2'));
+
+ chart.setOption({
+   title:{text:'学历需求'},
+   series:[{
+     type:'pie',
+     data:data.map(i=>({name:i[0],value:i[1]}))
+   }]
+ });
+}
+
+// ===== 工作经验 =====
+function drawExp(data){
+
+ let chart=echarts.init(document.getElementById('chart3'));
+
+ chart.setOption({
+   title:{text:'工作经验'},
+   xAxis:{type:'category',data:data.map(i=>i[0])},
+   yAxis:{type:'value'},
+   series:[{type:'bar',data:data.map(i=>i[1])}]
+ });
+}
+
+// ===== 薪资 =====
+function drawSalary(data){
+
+ let chart=echarts.init(document.getElementById('chart4'));
+
+ chart.setOption({
+   title:{text:'薪资分布'},
+   xAxis:{type:'category',data:data.map(i=>i[0])},
+   yAxis:{type:'value'},
+   series:[{type:'bar',data:data.map(i=>i[1])}]
+ });
+}
+
+</script>
