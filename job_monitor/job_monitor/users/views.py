@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
 
 def register(request):
@@ -42,3 +43,14 @@ def user_login(request):
         context['username'] = username
 
     return render(request, 'login.html', context)
+
+
+@login_required(login_url='/login/')
+def user_home(request):
+    return render(request, 'my_home.html')
+
+
+@login_required(login_url='/login/')
+def user_logout(request):
+    logout(request)
+    return redirect('/login/')
