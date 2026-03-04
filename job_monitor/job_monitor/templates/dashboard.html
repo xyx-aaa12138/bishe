@@ -1,89 +1,365 @@
-<h2>大学生就业分析系统</h2>
-<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-<input id="major" placeholder="请输入专业">
-<button onclick="run()">搜索</button>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>大学生就业分析系统</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: #0f172a;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+      min-height: 100vh;
+    }
+    .container {
+      width: min(1160px, 92vw);
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .title {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #334155;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn:hover { border-color: #94a3b8; }
+    .btn-primary {
+      border-color: #2563eb;
+      background: #2563eb;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-contact {
+      border-color: #0f766e;
+      background: #0f766e;
+      color: #fff;
+    }
+    .btn-contact:hover { background: #115e59; }
+    .avatar-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+    }
+    .avatar-btn:hover {
+      border-color: #94a3b8;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, .12);
+    }
+    .avatar-icon { font-size: 18px; line-height: 1; }
+    .actions { position: relative; }
+    .user-menu {
+      display: none;
+      position: absolute;
+      right: 96px;
+      top: 46px;
+      min-width: 168px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 10px 22px rgba(15,23,42,.14);
+      padding: 10px;
+      z-index: 10;
+    }
+    .user-menu.show { display: block; }
+    .user-menu .user-name {
+      font-size: 13px;
+      color: #334155;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .user-menu a {
+      display: block;
+      text-decoration: none;
+      color: #2563eb;
+      font-size: 13px;
+    }
 
-<div id="chart1" style="width:700px;height:400px;"></div>
-<div id="chart2" style="width:700px;height:400px;"></div>
-<div id="chart3" style="width:700px;height:400px;"></div>
-<div id="chart4" style="width:700px;height:400px;"></div>
+    .search-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, .08);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .search-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    #major {
+      flex: 1;
+      min-width: 220px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+    #major:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    }
+    #searchBtn {
+      border: 0;
+      border-radius: 10px;
+      background: #2563eb;
+      color: #fff;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #searchBtn:disabled {
+      cursor: not-allowed;
+      opacity: .7;
+    }
+
+    .progress-wrap {
+      margin-top: 12px;
+      display: none;
+    }
+    .progress-text {
+      font-size: 13px;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+    .progress-track {
+      width: 100%;
+      background: #e2e8f0;
+      border-radius: 999px;
+      height: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar {
+      width: 35%;
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #38bdf8);
+      border-radius: 999px;
+      position: absolute;
+      left: -35%;
+      animation: loading 1.2s linear infinite;
+    }
+    @keyframes loading {
+      0% { left: -35%; }
+      100% { left: 100%; }
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .chart-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, .08);
+      padding: 12px;
+    }
+    .chart {
+      width: 100%;
+      height: 360px;
+    }
+
+    @media (max-width: 900px) {
+      .chart-grid { grid-template-columns: 1fr; }
+      .title { font-size: 23px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <h2 class="title">大学生就业分析系统</h2>
+      <div class="actions">
+        {% if user.is_authenticated %}
+        <button class="avatar-btn" type="button" title="{{ user.username }}" onclick="toggleUserMenu()">
+          <span class="avatar-icon">👤</span>
+        </button>
+        <div id="userMenu" class="user-menu">
+          <div class="user-name">已登录：{{ user.username }}</div>
+          <a href="/dashboard/">我的主页</a>
+        </div>
+        {% else %}
+        <a class="btn" href="/login/">登录</a>
+        <a class="btn btn-primary" href="/register/">注册</a>
+        {% endif %}
+        <button class="btn btn-contact" onclick="contactUs()">联系我们</button>
+      </div>
+    </div>
+
+    <div class="search-card">
+      <div class="search-row">
+        <input id="major" placeholder="请输入专业，例如：计算机科学与技术" />
+        <button id="searchBtn" onclick="run()">搜索</button>
+      </div>
+
+      <div id="progressWrap" class="progress-wrap">
+        <div id="progressText" class="progress-text">努力搜索中，请稍候...</div>
+        <div class="progress-track">
+          <div class="progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card"><div id="chart1" class="chart"></div></div>
+      <div class="chart-card"><div id="chart2" class="chart"></div></div>
+      <div class="chart-card"><div id="chart3" class="chart"></div></div>
+      <div class="chart-card"><div id="chart4" class="chart"></div></div>
+    </div>
+  </div>
 
 <script>
-
-function run(){
-
- fetch("/run/",{
-   method:"POST",
-   headers:{
-     "Content-Type":"application/json",
-     "X-CSRFToken":"{{ csrf_token }}"
-   },
-   body:JSON.stringify({
-     major:document.getElementById("major").value
-   })
- })
- .then(r=>r.json())
- .then(data=>{
-
-    drawCity(data.city);
-    drawEdu(data.edu);
-    drawExp(data.exp);
-    drawSalary(data.salary);
-
- })
+function contactUs() {
+  alert('联系我们：2755695835@qq.com');
 }
 
-// ===== 城市岗位 =====
+function toggleUserMenu() {
+  const menu = document.getElementById('userMenu');
+  if (!menu) return;
+  menu.classList.toggle('show');
+}
+
+document.addEventListener('click', function (e) {
+  const menu = document.getElementById('userMenu');
+  const btn = document.querySelector('.avatar-btn');
+  if (!menu || !btn) return;
+  if (!menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('show');
+  }
+});
+
+function setLoading(loading, text) {
+  const wrap = document.getElementById('progressWrap');
+  const btn = document.getElementById('searchBtn');
+  const pText = document.getElementById('progressText');
+
+  if (loading) {
+    pText.textContent = text || '努力搜索中，请稍候...';
+    wrap.style.display = 'block';
+    btn.disabled = true;
+    btn.textContent = '搜索中...';
+  } else {
+    wrap.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = '搜索';
+  }
+}
+
+function run() {
+  const major = document.getElementById('major').value.trim();
+  if (!major) {
+    alert('请先输入专业关键词。');
+    return;
+  }
+
+  setLoading(true, '努力搜索中，正在爬取岗位数据...');
+
+  fetch('/run/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({ major })
+  })
+  .then(r => {
+    if (!r.ok) {
+      throw new Error('请求失败，请稍后重试。');
+    }
+    return r.json();
+  })
+  .then(data => {
+    drawCity(data.city || []);
+    drawEdu(data.edu || []);
+    drawExp(data.exp || []);
+    drawSalary(data.salary || []);
+    setLoading(false);
+  })
+  .catch(err => {
+    setLoading(false);
+    alert(err.message || '搜索失败，请稍后重试。');
+  });
+}
+
 function drawCity(data){
-
- let chart=echarts.init(document.getElementById('chart1'));
-
- chart.setOption({
-   title:{text:'岗位城市分布'},
-   xAxis:{type:'category',data:data.map(i=>i[0])},
-   yAxis:{type:'value'},
-   series:[{type:'bar',data:data.map(i=>i[1])}]
- });
+  let chart = echarts.init(document.getElementById('chart1'));
+  chart.setOption({
+    title:{text:'岗位城市分布'},
+    tooltip:{trigger:'axis'},
+    xAxis:{type:'category',data:data.map(i=>i[0])},
+    yAxis:{type:'value'},
+    series:[{type:'bar',data:data.map(i=>i[1]), itemStyle:{color:'#2563eb'}}]
+  });
 }
 
-// ===== 学历 =====
 function drawEdu(data){
-
- let chart=echarts.init(document.getElementById('chart2'));
-
- chart.setOption({
-   title:{text:'学历需求'},
-   series:[{
-     type:'pie',
-     data:data.map(i=>({name:i[0],value:i[1]}))
-   }]
- });
+  let chart = echarts.init(document.getElementById('chart2'));
+  chart.setOption({
+    title:{text:'学历需求'},
+    tooltip:{trigger:'item'},
+    series:[{
+      type:'pie',
+      radius:'60%',
+      data:data.map(i=>({name:i[0],value:i[1]}))
+    }]
+  });
 }
 
-// ===== 工作经验 =====
 function drawExp(data){
-
- let chart=echarts.init(document.getElementById('chart3'));
-
- chart.setOption({
-   title:{text:'工作经验'},
-   xAxis:{type:'category',data:data.map(i=>i[0])},
-   yAxis:{type:'value'},
-   series:[{type:'bar',data:data.map(i=>i[1])}]
- });
+  let chart = echarts.init(document.getElementById('chart3'));
+  chart.setOption({
+    title:{text:'工作经验'},
+    tooltip:{trigger:'axis'},
+    xAxis:{type:'category',data:data.map(i=>i[0])},
+    yAxis:{type:'value'},
+    series:[{type:'bar',data:data.map(i=>i[1]), itemStyle:{color:'#0f766e'}}]
+  });
 }
 
-// ===== 薪资 =====
 function drawSalary(data){
-
- let chart=echarts.init(document.getElementById('chart4'));
-
- chart.setOption({
-   title:{text:'薪资分布'},
-   xAxis:{type:'category',data:data.map(i=>i[0])},
-   yAxis:{type:'value'},
-   series:[{type:'bar',data:data.map(i=>i[1])}]
- });
+  let chart = echarts.init(document.getElementById('chart4'));
+  chart.setOption({
+    title:{text:'薪资分布'},
+    tooltip:{trigger:'axis'},
+    xAxis:{type:'category',data:data.map(i=>i[0])},
+    yAxis:{type:'value'},
+    series:[{type:'bar',data:data.map(i=>i[1]), itemStyle:{color:'#7c3aed'}}]
+  });
 }
-
 </script>
+</body>
+</html>
